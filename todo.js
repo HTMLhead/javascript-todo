@@ -1,18 +1,18 @@
 class Todo {
-    constructor(History, Output, CheckError, AddWiseSaying) {
+    constructor(history, output, checkError, addWiseSaying) {
         this.todoList = [];
-        this.History = History;
-        this.Output = Output;
-        this.CheckError = CheckError;
-        this.AddWiseSaying = AddWiseSaying;
+        this.history = history;
+        this.output = output;
+        this.checkError = checkError;
+        this.addWiseSaying = addWiseSaying;
     }
 
     init() {
-        if(!this.CheckError.init(this.todoList)) return;
+        if(!this.checkError.init(this.todoList)) return;
         const allDataObj = {dataList: this.todoList}
-        this.History.saveInitData(allDataObj)
+        this.history.saveInitData(allDataObj)
         this.todoList = [];
-        this.Output.init(this.todoList)
+        this.output.init(this.todoList)
     }
 
     getStatusNum(accumulatedTask) {
@@ -24,14 +24,15 @@ class Todo {
     }
 
     add(objToAdd) {
-        if(!this.CheckError.add(objToAdd, this.todoList)) return;
-        const newTodo = new Task(this.getRanNum(this.todoList), objToAdd.name, 'todo', objToAdd.tag, 0)
+        if(!this.checkError.add(objToAdd, this.todoList)) return;
+        const ranNum = this.getRanNum(this.todoList)
+        const newTodo = new Task(ranNum, objToAdd.name, 'todo', objToAdd.tag, 0)
         this.todoList.push(this.checkTag(newTodo));
         let statusNum = this.getStatusNum(this.todoList)
-        this.Output.changes('add', newTodo)
-        this.Output.nowStatus(statusNum)
-        this.History.saveAddData(newTodo)
-        this.Output.wiseSaying(this.AddWiseSaying.getWiseSaying());
+        this.output.changes('add', newTodo)
+        this.output.nowStatus(statusNum)
+        this.history.saveAddData(newTodo)
+        this.output.wiseSaying(this.addWiseSaying.getWiseSaying());
     }//add
 
     getRanNum(todoList) {
@@ -51,24 +52,24 @@ class Todo {
     }//for add2
 
     remove(objToRemove) {
-        if(!this.CheckError.remove(objToRemove, this.todoList)) return;
+        if(!this.checkError.remove(objToRemove, this.todoList)) return;
         const toRemoveData = this.todoList.filter(obj => obj.id === objToRemove.id)[0]
-        this.Output.changes('remove', toRemoveData)
-        this.History.saveRemoveData(toRemoveData)
+        this.output.changes('remove', toRemoveData)
+        this.history.saveRemoveData(toRemoveData)
         this.todoList = this.todoList.filter(obj => obj.id !== objToRemove.id)
     }//remove
 
     update(objToUpdate) {
-        if(!this.CheckError.update(objToUpdate, this.todoList)) return;
+        if(!this.checkError.update(objToUpdate, this.todoList)) return;
         objToUpdate.nextstatus = objToUpdate.nextstatus.toLowerCase().replace(/ /gi, "")
         const beforeData = this.copyData(this.todoList, objToUpdate)
         this.todoList = this.getUpdatedList(this.todoList, objToUpdate)
         this.todoList = this.checkUpdateStatus(objToUpdate, this.todoList)
         const updatedData = this.copyData(this.todoList, objToUpdate)
         const statusNum = this.getStatusNum(this.todoList);
-        this.Output.changes('update', updatedData[0], beforeData[0])
-        this.Output.nowStatus(statusNum)
-        this.History.saveUpdateData(updatedData[0], beforeData[0])
+        this.output.changes('update', updatedData[0], beforeData[0])
+        this.output.nowStatus(statusNum)
+        this.history.saveUpdateData(updatedData[0], beforeData[0])
     }//update
 
     getUpdatedList(todoTask, objToUpdate) {
@@ -138,46 +139,46 @@ class Todo {
     }//for update6
 
     undo() {
-        this.todoList = this.History.undo(this.todoList)
+        this.todoList = this.history.undo(this.todoList)
     }
 
     redo() {
-        this.todoList = this.History.redo(this.todoList)
+        this.todoList = this.history.redo(this.todoList)
     }
 
     show(status) {
-        if(!this.CheckError.show(status, this.todoList)) return;
-        this.Output.status(this.todoList, status)
+        if(!this.checkError.show(status, this.todoList)) return;
+        this.output.status(this.todoList, status)
     }
 
     showTag(tag) {
         if (tag !== undefined) {
-            this.Output.haveTag(tag, this.todoList)
+            this.output.haveTag(tag, this.todoList)
             return;
         }
-        this.Output.notHaveTag(tag, this.todoList)
+        this.output.notHaveTag(tag, this.todoList)
     }
 
     showTags() {
         const taggedTodos = this.todoList.filter(obj => obj.tag !== 'noting')
-        const sameTagList = this.Output.getTagList(taggedTodos);
+        const sameTagList = this.output.getTagList(taggedTodos);
         sameTagList.forEach(tag => {
-            const sameTagNum = this.Output.getSameTagNum(tag, taggedTodos)
-            this.Output.printSameTag(tag, taggedTodos, sameTagNum)
+            const sameTagNum = this.output.getSameTagNum(tag, taggedTodos)
+            this.output.printSameTag(tag, taggedTodos, sameTagNum)
         })
     }
 
     showAll() {
-        this.Output.all(this.todoList)
+        this.output.all(this.todoList)
     }
 }
 
 
 class History {
-    constructor(Output) {
+    constructor(output) {
         this.dataList = [];
         this.undoList = [];
-        this.Output = Output
+        this.output = output
     }
 
     saveAddData(newTodo) {
@@ -231,24 +232,24 @@ class History {
 
     undoInit(todoTask, task) {
         todoTask = task.initedData
-        this.Output.init(todoTask)
+        this.output.init(todoTask)
         return todoTask
     }
 
     undoAdd(todoTask, task) {
-        this.Output.changes('remove', task.addedData)
+        this.output.changes('remove', task.addedData)
         todoTask = todoTask.filter(obj => obj.id !== task.addedData.id)
         return todoTask
     }//add
 
     undoRemove(todoTask, task) {
         todoTask.push(task.removedData)
-        this.Output.changes('add', task.removedData)
+        this.output.changes('add', task.removedData)
         return todoTask
     }//remove
 
     undoUpdate(todoTask, task) {
-        this.Output.changes('update', task.beforeData, task.updatedData)
+        this.output.changes('update', task.beforeData, task.updatedData)
         todoTask = this.resetUpdate(todoTask, task.beforeData)
         return todoTask
     }//update
@@ -292,24 +293,24 @@ class History {
 
     redoInit(todoTask) {
         todoTask = [];
-        this.Output.init(todoTask)
+        this.output.init(todoTask)
         return todoTask
     }
 
     redoAdd(todoTask, undid) {
         todoTask.push(undid.addedData)
-        this.Output.changes('add', undid.addedData)
+        this.output.changes('add', undid.addedData)
         return todoTask
     }//remove
 
     redoRemove(todoTask, undid) {
-        this.Output.changes('remove', undid.removedData)
+        this.output.changes('remove', undid.removedData)
         todoTask = todoTask.filter(obj => obj.id !== undid.removedData.id)
         return todoTask
     }//add
 
     redoUpdate(todoTask, undid) {
-        this.Output.changes('update', undid.updatedData, undid.beforeData)
+        this.output.changes('update', undid.updatedData, undid.beforeData)
         todoTask = this.resetUpdate(todoTask, undid.updatedData)
         return todoTask
     }//update
@@ -439,7 +440,7 @@ class Output {
             } else if (status === 'done') {
                 return;
             }
-        }.bind(todo.Output), 2000)
+        }.bind(todo.output), 2000)
     }
 }
 
@@ -550,5 +551,3 @@ const checkError = new CheckError();
 const addWiseSaying = new AddWiseSaying();
 const history = new History(output);
 const todo = new Todo(history, output, checkError, addWiseSaying)
-
-todo.showAll();
